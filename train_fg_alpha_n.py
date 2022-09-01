@@ -94,7 +94,7 @@ def train(id):
     return loss
 
 def get_fg(model_f, model_g, id): 
-    dataset = load_data(id, 100)
+    dataset = load_data(id, 20)
     dataiter = iter(dataset)
     x, y = next(dataiter)
     y = torch.zeros(len(y), 2).scatter_(1, y.view(-1,1), 1)
@@ -182,7 +182,11 @@ if __name__ == "__main__":
 
     # alpha0 = torch.tensor([0.050390117, 0.047139142, 0.045838752, 0.051040312, 0.046163849, 0.047789337, 0.046814044, 0.045838752, 0.047789337, 0.045513654, 0.048439532, 0.048114434, 0.049089727, 0.047789337, 0.046814044, 0.045838752, 0.046488947, 0.047464239, 0.048114434, 0.049089727, 0.048439532])
     alpha0=torch.rand(N_TASK)
+    alpha0 = alpha0 / alpha0.sum()
     epoch_out = 20
+
+    batch_size = 100
+    logging.info('batch_size: {}'.format(batch_size))
     
     for eo in range(epoch_out):
         print("=================epoch #{}================".format(eo))
@@ -211,7 +215,7 @@ if __name__ == "__main__":
             
             sourceiter = []
             for id in range(1,N_TASK):
-                source = load_data(id, batch_size=25)
+                source = load_data(id, batch_size=batch_size)
                 sourceiter.append(iter(source))
 
             losscc=[]
@@ -249,7 +253,7 @@ if __name__ == "__main__":
                 gce = np.sum(gc,axis = 0) / gc.shape[0]
                 gcp = gc - gce
 
-                for k, data in enumerate(testset, 0):
+                for j, data in enumerate(testset, 0):
                     samples, labels = data
                     labels = labels.numpy()
                     fc = model_f(Variable(samples).to(device)).data.cpu().numpy()
@@ -282,8 +286,8 @@ if __name__ == "__main__":
         print(finalacc)
         print(alpha0)
 
-        torch.save(paraf, 'mpara/cifar100f_alpha_all.pth')
-        torch.save(parag, 'mpara/cifar100g_alpha_all.pth')
+        torch.save(paraf, 'mpara/cifar100f_alpha_all_{}.pth'.format(batch_size))
+        torch.save(parag, 'mpara/cifar100g_alpha_all_{}.pth'.format(batch_size))
 
         
         # ==============================================================
@@ -296,8 +300,8 @@ if __name__ == "__main__":
         phi_x = []
         phi_cov_x = []
 
-        model_f.load_state_dict(torch.load('mpara/cifar100f_alpha_all.pth', map_location='cpu'))
-        model_g.load_state_dict(torch.load('mpara/cifar100g_alpha_all.pth', map_location='cpu'))
+        model_f.load_state_dict(torch.load('mpara/cifar100f_alpha_all_{}.pth'.format(batch_size), map_location='cpu'))
+        model_g.load_state_dict(torch.load('mpara/cifar100g_alpha_all_{}.pth'.format(batch_size), map_location='cpu'))
         model_f.eval()
         model_g.eval()
 
